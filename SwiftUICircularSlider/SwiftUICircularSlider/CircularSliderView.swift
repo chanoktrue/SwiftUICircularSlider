@@ -84,6 +84,9 @@ private struct TemperatureControlView: View {
                         .onChanged({ value in
                             change(location: value.location)
                         })
+                        .onEnded({ value in
+                            print("Send cmd")
+                        })
                 )
                 .rotationEffect(.degrees(config.degrees + 90))
             
