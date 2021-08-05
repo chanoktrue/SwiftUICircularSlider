@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  CircularSliderView.swift
 //  SwiftUICircularSlider
 //
 //  Created by Thongchai Subsaidee on 5/8/2564 BE.
@@ -7,13 +7,11 @@
 
 import SwiftUI
 
-
-
-struct ContentView: View {
+struct CircularSliderView: View {
     var body: some View {
         ZStack {
             Rectangle()
-                .fill(Color.init(red: 34/255, green: 30/255, blue: 47/255))
+                .fill(Color(red: 34/255, green: 30/255, blue: 47/255))
                 .edgesIgnoringSafeArea(.all)
             
             TemperatureControlView()
@@ -21,18 +19,19 @@ struct ContentView: View {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
+struct CircularSliderView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        CircularSliderView()
     }
 }
 
 private struct Config {
     let minimumValue: CGFloat
-    let maximumValue: CGFloat
+    let maxinumValue: CGFloat
     let totalValue: CGFloat
     let knobRadius: CGFloat
     let radius: CGFloat
+    let degrees: Double
 }
 
 private struct TemperatureControlView: View {
@@ -42,34 +41,40 @@ private struct TemperatureControlView: View {
     
     let config = Config(
         minimumValue: 0.0,
-        maximumValue: 40.0,
-        totalValue: 40.0,
+        maxinumValue: 76,
+        totalValue: 100,
         knobRadius: 15.0,
-        radius: 125.0)
+        radius: 125.0,
+        degrees: -225
+     )
     
     var body: some View {
+        
         ZStack {
             
-            //Background
+            // Background circle black color
             Circle()
                 .frame(width: config.radius * 2, height: config.radius * 2)
                 .scaleEffect(1.2)
             
-            // Dash
+            // Background progress
             Circle()
-                .stroke(Color.gray, style: StrokeStyle(lineWidth: 3, lineCap: .butt, dash: [3, 23.18]))
+                
+                .trim(from: 0.0, to: config.maxinumValue / 100)
+                .stroke(Color.gray, lineWidth: 4)
                 .frame(width: config.radius * 2, height: config.radius * 2)
+                .rotationEffect(.degrees(config.degrees))
             
-            // progress
+            // Progress
             Circle()
                 .trim(from: 0.0, to: temperatureValue / config.totalValue)
-                .stroke(temperatureValue < config.maximumValue / 2 ? Color.blue : Color.red, lineWidth: 4)
-                .frame(width: config.radius * 2, height: config.radius * 2)
-                .rotationEffect(.degrees(-90))
+                .stroke(Color.blue, lineWidth: 4)
+                .frame(width: config.radius * 2 , height: config.radius * 2)
+                .rotationEffect(.degrees(config.degrees))
             
             // Knob
             Circle()
-                .fill(temperatureValue < config.maximumValue / 2 ? Color.blue : Color.red)
+                .fill(Color.blue)
                 .frame(width: config.knobRadius * 2, height: config.knobRadius * 2)
                 .padding(10)
                 .offset(y: -config.radius)
@@ -77,35 +82,44 @@ private struct TemperatureControlView: View {
                 .gesture(
                     DragGesture(minimumDistance: 0.0)
                         .onChanged({ value in
-                            chage(location: value.location)
+                            change(location: value.location)
                         })
                 )
+                .rotationEffect(.degrees(config.degrees + 90))
             
             // Display
-            Text("\(String.init(format: "%.0f", temperatureValue)) °")
+            Text(display())
                 .font(.system(size: 60))
                 .foregroundColor(.white)
         }
+        
     }
     
-    private func chage(location: CGPoint) {
-        // createing vector from location point
+    private func change(location: CGPoint) {
+        
+        // Creating vector from location point
         let vector = CGVector(dx: location.x, dy: location.y)
         
-        // geting angle in radian need to substract the khob radius and pidding
+        // Geting angle in radius need to subtract the knob radius and padding
         let angle = atan2(vector.dy - (config.knobRadius + 10), vector.dx - (config.knobRadius + 10)) + .pi / 2.0
         
-        // convert angle range from (-pi to pi) to (0 to 2pi)
+        // Convert angle from (-pi to pi) to (0 to 2pi)
         let fixedAngle = angle < 0.0 ? angle + 2.0 * .pi : angle
         
-        // convert angle value to temperature value
+        // Convert angel value to temperature value
         let value = fixedAngle / (2.0 * .pi) * config.totalValue
         
-        if value >= config.minimumValue && value <= config.maximumValue {
+        if value >= config.minimumValue && value <= config.maxinumValue {
             self.temperatureValue = value
-            self.angleValue = fixedAngle * 180 / .pi // converting to degrees
+            self.angleValue = fixedAngle * 180 / .pi // Convert to degree
         }
     }
     
+    private func display() -> String {
+        let tempValue: Double = Double(self.temperatureValue)
+        let value: Int = Int((tempValue * 10) / 25)
+        let temp: Double = (Double(value) / 2)  + 15
+        return String(format: "%.01f", temp) + "°"
+    }
     
 }
